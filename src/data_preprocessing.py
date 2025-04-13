@@ -73,6 +73,62 @@ def tokenize_function(examples):
 
 df = pd.read_csv("data/mle_screening_dataset.csv")
 
+#### preprocess the data
+import re
+print("Null Value Data:")
+print(df.isnull().sum())
+
+# Define a list of common question words to filter relevant questions
+question_words = ['what', 'who', 'why', 'when', 'where', 'how', 'is', 'are', 'does', 'do', 'can', 'will', 'shall']
+
+# Convert all questions to lowercase for consistent filtering
+df['question'] = df['question'].str.lower()
+
+# Filter rows where the question starts with one of the question words
+df = df[df['question'].str.split().str[0].isin(question_words)]
+
+# Reset the index after filtering
+df = df.reset_index(drop=True)
+
+# Check for duplicate rows in the dataset
+duplicates = df.duplicated()
+print(f"Number of duplicate rows: {duplicates.sum()}")
+
+# Remove duplicate rows to ensure data uniqueness
+df = df.drop_duplicates()
+
+# Reset the index after removing duplicates
+df.reset_index(drop=True, inplace=True)
+
+
+df = df.drop_duplicates(subset='question', keep='first').reset_index(drop=True)
+df = df.drop_duplicates(subset='answer', keep='first').reset_index(drop=True)
+
+# Drop rows with null values in the 'question' or 'answer' columns
+df = df.dropna(subset=['question', 'answer']).reset_index(drop=True)
+
+# Fill any remaining null values with empty strings and convert to string type
+df['question'] = df['question'].fillna('').astype(str)
+df['answer'] = df['answer'].fillna('').astype(str)
+
+# Define a function to clean text by removing parentheses and extra spaces
+def clean_text(text):
+    text = re.sub(r"\(.*?\)", "", text)  # Remove text within parentheses
+    text = re.sub(r'\s+', ' ', text.strip().lower())  # Normalize spaces and convert to lowercase
+    return text
+
+# Apply the clean_text function to the 'question' and 'answer' columns
+df['question'] = df['question'].apply(clean_text)
+df['answer'] = df['answer'].apply(clean_text)
+
+# Further clean the text by ensuring lowercase, stripping whitespace, and normalizing spaces
+df['question'] = df['question'].str.lower().str.strip().apply(lambda x: re.sub(r'\s+', ' ', x))
+df['answer'] = df['answer'].str.lower().str.strip().apply(lambda x: re.sub(r'\s+', ' ', x))
+
+
+
+###
+
 
 splits = split_dataset_from_df(df, train_ratio=0.65, validation_ratio=0.25, test_ratio=0.1)
 
@@ -251,3 +307,44 @@ bertscore_results = calculate_bert_scores(model, tokenizer, evu_dataset)
 print(f"Average BLEU score: {average_bleu_score}")
 print("Average ROUGE scores:", average_rouge_scores)
 print("BERTScore Results:", bertscore_results)
+
+######
+def compute_metrics(eval_pred, tokenizer):
+    """
+    Computes exact match, BLEU, and ROUGE-L metrics for evaluation.
+    """
+    predictions, labels = eval_pred
+
+    # Decode predictions and labels
+    decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+    decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+
+    # Normalize text for comparison
+    decoded_preds = [text.strip().lower() for text in decoded_preds]
+    decoded_labels = [text.strip().lower() for text in decoded_labels]
+
+    # Compute exact match
+    exact_match = np.mean([p == l for p, l in zip(decoded_preds, decoded_labels)])
+
+    # Load BLEU and ROUGE metrics
+    bleu_metric = evaluate.load("bleu")
+    rouge_metric = evaluate.load("rouge")
+
+    # Compute BLEU score
+    bleu_score = bleu_metric.compute(
+        predictions=decoded_preds,
+        references=[[label] for label in decoded_labels]
+    )["bleu"]
+
+    # Compute ROUGE-L score
+    rouge_score = rouge_metric.compute(
+        predictions=decoded_preds,
+        references=decoded_labels
+    )["rougeL"]
+
+    return {
+        "exact_match": exact_match,
+        "BLEU": bleu_score,
+        "ROUGE-L": rouge_score,
+    }
