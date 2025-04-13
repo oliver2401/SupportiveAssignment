@@ -5,6 +5,7 @@ from transformers import T5Tokenizer, T5ForConditionalGeneration, Seq2SeqTrainin
 from transformers import Seq2SeqTrainer, DataCollatorForSeq2Seq, TrainerCallback, T5Config
 import pandas as pd
 import numpy as np
+import evaluate
 
 
 
@@ -141,8 +142,8 @@ tokenized_datasets['test']= splits['test'].map(tokenize_function, batched=True, 
 
 ########
 model = AutoModelForSeq2SeqLM.from_pretrained('t5-small').to(device) 
-#model = GPT2LMHeadModel.from_pretrained('gpt2').to(device)
 model.config.pad_token_id = tokenizer.pad_token_id
+
 training_args = TrainingArguments(
     output_dir="./gpt2-medquad-finetuned",
     eval_strategy="epoch",
@@ -151,7 +152,7 @@ training_args = TrainingArguments(
     num_train_epochs=3,
     per_device_train_batch_size=8,
     gradient_accumulation_steps=4,
-    fp16=torch.cuda.is_available(),  # Enable mixed precision if CUDA is available
+    fp16=torch.cuda.is_available(),
     save_strategy="epoch",
     logging_dir='./logs',
     logging_steps=10,
@@ -168,8 +169,6 @@ trainer = Trainer(
 
 trainer.train()
 
-#model.save_pretrained("./gpt2-medquad-finetuned")
-#tokenizer.save_pretrained("./gpt2-medquad-finetuned")
 model.save_pretrained("medical_chatbot_model")
 tokenizer.save_pretrained("medical_chatbot_tokenizer")
 
@@ -307,44 +306,3 @@ bertscore_results = calculate_bert_scores(model, tokenizer, evu_dataset)
 print(f"Average BLEU score: {average_bleu_score}")
 print("Average ROUGE scores:", average_rouge_scores)
 print("BERTScore Results:", bertscore_results)
-
-######
-def compute_metrics(eval_pred, tokenizer):
-    """
-    Computes exact match, BLEU, and ROUGE-L metrics for evaluation.
-    """
-    predictions, labels = eval_pred
-
-    # Decode predictions and labels
-    decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
-    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
-    decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
-
-    # Normalize text for comparison
-    decoded_preds = [text.strip().lower() for text in decoded_preds]
-    decoded_labels = [text.strip().lower() for text in decoded_labels]
-
-    # Compute exact match
-    exact_match = np.mean([p == l for p, l in zip(decoded_preds, decoded_labels)])
-
-    # Load BLEU and ROUGE metrics
-    bleu_metric = evaluate.load("bleu")
-    rouge_metric = evaluate.load("rouge")
-
-    # Compute BLEU score
-    bleu_score = bleu_metric.compute(
-        predictions=decoded_preds,
-        references=[[label] for label in decoded_labels]
-    )["bleu"]
-
-    # Compute ROUGE-L score
-    rouge_score = rouge_metric.compute(
-        predictions=decoded_preds,
-        references=decoded_labels
-    )["rougeL"]
-
-    return {
-        "exact_match": exact_match,
-        "BLEU": bleu_score,
-        "ROUGE-L": rouge_score,
-    }
