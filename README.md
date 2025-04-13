@@ -114,3 +114,58 @@ Measures overlap of n-grams, with variants like ROUGE-1, ROUGE-2, and ROUGE-L fo
 Uses a large language model (BERT-like) to compare embedding similarity between the generated text and reference text. Precision, Recall, and F1 indicate how semantically close the generated text is to the reference. These values can be negative if the text is significantly dissimilar to the reference.
 
 If you get low or negative scores, it usually indicates that either your training data is small, or the model might need more epochs/hyperparameter tuning.
+
+
+### How to Run the Chatbot Application
+
+Option A: Local Streamlit App
+1.	Create another virtual environment (similar to above) but use the requirements_app.txt file this time:
+
+```bash 
+python -m venv chatbot_venv
+source chatbot_venv/bin/activate  # or chatbot_venv\Scripts\activate on Windows
+pip install -r requirements_app.txt
+```
+
+2.	Ensure you are in the root directory (where app.py is located) and run:
+
+```bash 
+streamlit run app.py
+```
+This will open a new tab in your browser. Enter your question into the text input field, and you’ll see the model’s response.
+
+Option B: Chatbot App via Docker
+1.	Build the Docker image (assuming Dockerfile is configured for the Streamlit app):
+
+```bash
+docker build . -t supportiveassignment
+```
+
+2.	Run the container, exposing port 8080 to the container’s 5000 (or 8501 if using default Streamlit):
+
+```bash
+docker run -it -p 8080:5000 supportiveassignment:latest
+```
+
+3.	Open your browser at http://localhost:8080 to interact with the chatbot.
+
+Note: The container likely uses CPU inference only, so it may run slower than local execution if you have MPS on macOS or CUDA on Windows/Linux. GPU acceleration requires specialized containers.
+
+
+## Expected results
+
+After running the `main.py` script you should be able to see that it created 2 folders:
+
+![fine tuned model and tokenizer](images/folders.png)
+
+And you should be able to see the progress of the fine tuning as follows (for 3 epochs):
+
+![Fine tuning progress](images/training_evaluation.png)
+
+Also when the script finishes it should display the BLEU/ROUGE/BERTScores that were evaluated for the test set:
+
+![BLEU/ROUGE/BERT scores](images/rouge_bleu_scores.png)
+
+Finally you would have the chatbot app running on your browser as shown in the following image:
+
+![Working chatbot app](images/chatbot.png)
