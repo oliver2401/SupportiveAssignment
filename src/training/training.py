@@ -1,13 +1,18 @@
 import torch
-from transformers import (AutoModelForSeq2SeqLM, Trainer, TrainingArguments)
+from transformers import (AutoModelForSeq2SeqLM, AutoTokenizer, Trainer, TrainingArguments, GPT2LMHeadModel, GPT2TokenizerFast)
 
 def train_model(tokenized_train, tokenized_val, device="cpu"):
 
-    model = AutoModelForSeq2SeqLM.from_pretrained('t5-small').to(device)
-    model.config.pad_token_id = model.config.eos_token_id
+    #model = AutoModelForSeq2SeqLM.from_pretrained('t5-small').to(device)
+    #model.config.pad_token_id = model.config.eos_token_id
+    #tokenizer = AutoTokenizer.from_pretrained('t5-small')
+    tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
+    model = GPT2LMHeadModel.from_pretrained('gpt2').to(device)
+    tokenizer.pad_token = tokenizer.eos_token
+    model.config.pad_token_id = tokenizer.pad_token_id
 
     training_args = TrainingArguments(
-        output_dir="./gpt2-medquad-finetuned",
+        output_dir="./gpt2-finetuned",
         eval_strategy="epoch",
         learning_rate=2e-5,
         weight_decay=0.01,

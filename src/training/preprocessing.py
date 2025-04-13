@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 from datasets import Dataset, DatasetDict
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, GPT2TokenizerFast
 
 
 if torch.backends.mps.is_available():
@@ -54,7 +54,8 @@ def split_dataset_from_df(
     return split_datasets
 
 
-tokenizer = AutoTokenizer.from_pretrained('t5-small')
+#tokenizer = AutoTokenizer.from_pretrained('t5-small')
+tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
 tokenizer.pad_token = tokenizer.eos_token
 
 def tokenize_function(examples):

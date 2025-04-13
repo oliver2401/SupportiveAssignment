@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import pandas as pd
 from datasets import Dataset
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, GPT2LMHeadModel, GPT2TokenizerFast
 import sacrebleu
 from rouge_score import rouge_scorer
 from bert_score import score
@@ -109,9 +109,19 @@ def calculate_bert_scores(model, tokenizer,dataset):
 
 def run_evaluation(dataset, model_path="medical_chatbot_model", tokenizer_path="medical_chatbot_tokenizer", device="cpu"):
 
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
     # Reload the final model & tokenizer from disk for generation
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+    #tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    #model = AutoModelForSeq2SeqLM.from_pretrained(model_path).to(device)
+
+    model = GPT2LMHeadModel.from_pretrained(model_path).to(device)
+    tokenizer = GPT2TokenizerFast.from_pretrained(tokenizer_path)
 
     # Evaluate on the test set with custom metrics
     test_set = dataset['test']  # hugging face dataset

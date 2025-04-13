@@ -10,7 +10,6 @@ def main():
     # 1. Load the CSV
     df = pd.read_csv("data/mle_screening_dataset.csv")
 
-
     # 2. Clean the data
     df = clean_data(df)
 
@@ -36,8 +35,8 @@ def main():
     )
 
     # Save your final model/ tokenizer
-    model.save_pretrained("medical_chatbot_model2")
-    tokenizer.save_pretrained("medical_chatbot_tokenizer2")
+    model.save_pretrained("medical_chatbot_model")
+    tokenizer.save_pretrained("medical_chatbot_tokenizer")
 
     # 5. Evaluation
     run_evaluation(dataset=splits, model_path="medical_chatbot_model", tokenizer_path="medical_chatbot_tokenizer", device=device)
