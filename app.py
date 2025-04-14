@@ -2,7 +2,7 @@ import streamlit as st
 import torch
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 
-# Example device logic
+
 if torch.backends.mps.is_available():
     device = "mps"
 elif torch.cuda.is_available():

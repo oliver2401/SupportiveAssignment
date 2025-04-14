@@ -116,15 +116,11 @@ def run_evaluation(dataset, model_path="medical_chatbot_model", tokenizer_path="
     else:
         device = "cpu"
 
-    # Reload the final model & tokenizer from disk for generation
-    #tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-    #model = AutoModelForSeq2SeqLM.from_pretrained(model_path).to(device)
 
     model = GPT2LMHeadModel.from_pretrained(model_path).to(device)
     tokenizer = GPT2TokenizerFast.from_pretrained(tokenizer_path)
 
-    # Evaluate on the test set with custom metrics
-    test_set = dataset['test']  # hugging face dataset
+    test_set = dataset['test']
     print(f"Started bleu evaluation")
     average_bleu_score = calculate_bleu(model, tokenizer, test_set)
     print(f"Started Rouge evaluation")
@@ -132,9 +128,6 @@ def run_evaluation(dataset, model_path="medical_chatbot_model", tokenizer_path="
     print(f"Started bertscore evaluation")
     bertscore_results = calculate_bert_scores(model, tokenizer, test_set)
 
-    # Print out results
-    print("===== Built-in Trainer Metrics =====")
-    #print(results_df)
     print("===== Custom Metrics (Test Set) =====")
     print(f"Average BLEU score: {average_bleu_score}")
     print("Average ROUGE scores:", average_rouge_scores)

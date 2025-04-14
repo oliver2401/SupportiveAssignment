@@ -3,9 +3,6 @@ from transformers import (AutoModelForSeq2SeqLM, AutoTokenizer, Trainer, Trainin
 
 def train_model(tokenized_train, tokenized_val, device="cpu"):
 
-    #model = AutoModelForSeq2SeqLM.from_pretrained('t5-small').to(device)
-    #model.config.pad_token_id = model.config.eos_token_id
-    #tokenizer = AutoTokenizer.from_pretrained('t5-small')
     tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
     model = GPT2LMHeadModel.from_pretrained('gpt2').to(device)
     tokenizer.pad_token = tokenizer.eos_token

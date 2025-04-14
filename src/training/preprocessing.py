@@ -53,8 +53,6 @@ def split_dataset_from_df(
 
     return split_datasets
 
-
-#tokenizer = AutoTokenizer.from_pretrained('t5-small')
 tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
 tokenizer.pad_token = tokenizer.eos_token
 
