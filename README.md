@@ -7,33 +7,62 @@ Contains code for Supportive code challenge
 
 This project is a basic medical question-answering system that uses a pre-trained language model fine-tuned on a custom dataset. The dataset contains medical information about various diseases and their treatments/preventions.
 
-## Approach
+## Approach & Model Discussion
 
-- **Data Preprocessing**: We load the dataset (`mle_screening_dataset.csv`) and apply basic cleaning (e.g., dropping nulls). We split the data into training and test sets.  
-- **Model Selection**: We use a pre-trained Transformer model (e.g., T-5) from Hugging Face, specifically for question-answering tasks.  
-- **Training**: We fine-tune the model on the training set. This step can be customized further to improve results (e.g., optimizing hyperparameters, employing advanced data augmentation, etc.).  
-- **Evaluation**: We evaluate using a simple accuracy measure, checking how many predicted answers match the ground truth. More robust metrics like Exact Match (EM) or F1 are recommended for QA tasks.
+### GPT2 Model & Architecture
 
-**Potential Improvements**:
+- We use **GPT2**, a decoder-only Transformer model, fine-tuned to generate concise answers when prompted with a “Question: ... Answer:” format.
+- **Tokenization**: We use `GPT2TokenizerFast` but set `pad_token = eos_token` to handle padding gracefully, as GPT2 has no dedicated pad token.
 
-- Use more advanced QA models (e.g., BERT-Large, RoBERTa, etc.).  
-- Enhance the preprocessing to handle complex queries.  
-- Use more sophisticated QA metrics or human evaluation for medical relevance.
+### Assumptions
 
-## Assumptions
+1. **Dataset Format**: We assume the dataset primarily has question-answer pairs.  
+2. **Medical Context**: We assume the data is already “clean” or minimal cleaning is sufficient for typical medical queries (spelling, format, duplicates, NaN values, etc.).  
+3. **Hardware**: On Apple Silicon (MPS) or NVIDIA GPUs, training and inference can be much faster than CPU. The Docker container typically runs CPU-only.
 
-- We assume that every row in the dataset has a context, a question, and an answer.  
-- We assume the dataset is already fairly clean or minimal cleaning is required.
+### Model Performance
 
-## Strengths and Weaknesses
+We evaluate the model with multiple text-generation metrics, including **BLEU**, **ROUGE**, and **BERTScore**. For example:
+
+```
+Average BLEU score: 0.0005052506433694588
+Average ROUGE scores: {
+‘rouge1’: 0.13002570632525373,
+‘rouge2’: 0.05252692549022517,
+‘rougeL’: 0.1148791558235285
+}
+BERTScore Results: {
+‘Precision’: 0.10485164821147919,
+‘Recall’: -0.17924591898918152,
+‘F1 Score’: -0.042341481894254684
+}
+```
+
+Interpretation:
+- **BLEU** and **ROUGE** measure token overlap with reference answers.
+- **BERTScore** measures semantic similarity using language model embeddings.
+
+Lower or negative scores often indicate that the model’s outputs deviate significantly from the references or that additional training epochs/tuning might be needed.
+
+### Strengths & Weaknesses
 
 - **Strengths**:  
-  - Quick to set up with Hugging Face pipelines.  
-  - Transfer learning benefits from large pre-trained models.
+  - **Transfer Learning**: GPT2’s large pre-trained knowledge base can handle various medical queries somewhat fluently.  
+  - **Customizable**: You can tailor prompts (e.g., “Question: ... Answer:”) to structure the conversation.  
 
 - **Weaknesses**:  
-  - QA accuracy heavily depends on the dataset size and quality.  
-  - Model might not handle out-of-distribution medical queries well.
+  - **Data Dependency**: If the dataset is small or lacks coverage, answers can be inaccurate or off-topic.  
+  - **Lack of True QA Alignment**: GPT2 is not strictly a Q&A model; it’s a free-form generator. Errors may be more frequent for domain-specific queries.  
+
+### Potential Improvements
+
+1. **Larger or Specialized Model**: For example, using GPT2-medium/large or domain-specific language models (e.g., BioGPT) might improve medical relevance.  
+2. **Data Augmentation**: Incorporating more domain-specific medical data or curated Q&A pairs for better coverage.  
+3. **Evaluation Metrics**:  
+   - Implement **Exact Match** or **F1** for strict Q&A tasks.  
+   - Consider **human evaluation** to ensure medical correctness.  
+4. **Prompt Engineering**: Prompt the model with more context or structured instructions to guide the style and format of the answers.
+
 
 ## How to Run
 
